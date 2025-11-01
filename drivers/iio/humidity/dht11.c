@@ -3,7 +3,10 @@
  * DHT11/DHT22 bit banging GPIO driver
  *
  * Copyright (c) Harald Geyer <harald@ccbib.org>
+ * Copyright (c) Vladislav Tsendrovskii <vtcendrovskii@gmail.com>
  */
+
+#include <asm/delay.h>
 
 #include <linux/err.h>
 #include <linux/interrupt.h>
@@ -71,6 +74,7 @@ struct dht11 {
 
 	struct gpio_desc		*gpiod;
 	int				irq;
+	int				poll;
 
 	struct completion		completion;
 	/* The iio sysfs interface doesn't prevent concurrent reads: */
@@ -222,16 +226,59 @@ static int dht11_read_raw(struct iio_dev *iio_dev,
 		if (ret)
 			goto err;
 
-		ret = request_irq(dht11->irq, dht11_handle_irq,
-				  IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-				  iio_dev->name, iio_dev);
-		if (ret)
-			goto err;
+		if (dht11->poll) {
+			const size_t edge_detector_length = 4u;
+			const s64 max_receive_time = 200000*50*42;
+			
+			s64 receive_begin_time = ktime_get_boottime_ns();
+			s64 current_time;
+			int value = gpiod_get_value(dht11->gpiod);
+			int edge_detector[edge_detector_length];
+			int previous_value = value;
 
-		ret = wait_for_completion_killable_timeout(&dht11->completion,
-							   HZ);
+			int index;
+			for (index = 0; index < edge_detector_length; index++)
+				edge_detector[index] = value;
 
-		free_irq(dht11->irq, iio_dev);
+			do {
+				value = gpiod_get_value(dht11->gpiod);
+				for (index = 0; index < edge_detector_length - 1; index++)
+					edge_detector[index] = edge_detector[index+1];
+				edge_detector[edge_detector_length - 1] = value;
+
+				int edge_detected = 1;
+				for (index = 0; index < edge_detector_length; index++)
+					if (edge_detector[index] != !previous_value) {
+						edge_detected = 0;
+						break;
+					}
+
+				udelay(1);
+				if (!edge_detected)
+					continue;
+
+				previous_value = value;
+				current_time = ktime_get_boottime_ns();
+				dht11->edges[dht11->num_edges].ts = current_time;
+				dht11->edges[dht11->num_edges++].value = value;
+
+				if (dht11->num_edges >= DHT11_EDGES_PER_READ) {
+					complete(&dht11->completion);
+					break;
+				}
+			} while (current_time < receive_begin_time + max_receive_time);
+		} else {
+			ret = request_irq(dht11->irq, dht11_handle_irq,
+					  IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+					  iio_dev->name, iio_dev);
+			if (ret)
+				goto err;
+
+			ret = wait_for_completion_killable_timeout(&dht11->completion,
+								   HZ);
+
+			free_irq(dht11->irq, iio_dev);
+		}
 
 #ifdef CONFIG_DYNAMIC_DEBUG
 		dht11_edges_print(dht11);
@@ -303,10 +350,14 @@ static int dht11_probe(struct platform_device *pdev)
 	if (IS_ERR(dht11->gpiod))
 		return PTR_ERR(dht11->gpiod);
 
-	dht11->irq = gpiod_to_irq(dht11->gpiod);
-	if (dht11->irq < 0) {
-		dev_err(dev, "GPIO %d has no interrupt\n", desc_to_gpio(dht11->gpiod));
-		return -EINVAL;
+	dht11->poll = 1;
+
+	if (!dht11->poll) {
+		dht11->irq = gpiod_to_irq(dht11->gpiod);
+		if (dht11->irq < 0) {
+			dev_err(dev, "GPIO %d has no interrupt\n", desc_to_gpio(dht11->gpiod));
+			return -EINVAL;
+		}
 	}
 
 	dht11->timestamp = ktime_get_boottime_ns() - DHT11_DATA_VALID_TIME - 1;
