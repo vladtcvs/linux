@@ -520,6 +520,61 @@ static void rg28xx_gip_sequence(struct st7701 *st7701)
 	st7701_switch_cmd_bkx(st7701, false, 0);
 }
 
+static void d450c2505v0_gip_sequence(struct st7701 *st7701)
+{
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x13);
+	ST7701_WRITE(st7701, 0xEF, 0x08);
+
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x10);
+	ST7701_WRITE(st7701, 0xC3, 0x00); //82 HVmode    02 DE+HV mode
+	ST7701_WRITE(st7701, 0xC7, 0x00);
+	ST7701_WRITE(st7701, 0xCC, 0x10);
+
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x11);
+	ST7701_WRITE(st7701, 0xB9, 0x10);
+	ST7701_WRITE(st7701, 0xBB, 0x02);
+	ST7701_WRITE(st7701, 0xC0, 0x09);
+	ST7701_WRITE(st7701, 0xE0, 0x00, 0x00, 0x02);
+	ST7701_WRITE(st7701, 0xE1, 0x05, 0xA0, 0x06, 0xA0, 0x04, 0xA0, 0x07, 0xA0, 0x0E, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE2, 0x30, 0x30, 0x44, 0x44, 0xD3, 0xA0, 0x00, 0x00, 0xD3, 0xA0, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0xE3, 0x00, 0x00, 0x33, 0x33);
+	ST7701_WRITE(st7701, 0xE4, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE8, 0x0A, 0xD3, 0x2C, 0x8C, 0x0C, 0xD5, 0x2C, 0x8C, 0x06, 0xCF, 0x2C, 0x8C, 0x08, 0xD1, 0x2C, 0x8C);
+	ST7701_WRITE(st7701, 0xE6, 0x00, 0x00, 0x33, 0x33);
+	ST7701_WRITE(st7701, 0xE7, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE5, 0x0B, 0xD2, 0x2C, 0x8C, 0x0D, 0xD4, 0x2C, 0x8C, 0x07, 0xCE, 0x2C, 0x8C, 0x09, 0xD0, 0x2C, 0x8C);
+	ST7701_WRITE(st7701, 0xEB, 0x00, 0x01, 0xE4, 0xE4, 0x44, 0x88, 0x40);
+	ST7701_WRITE(st7701, 0xEC, 0x7D, 0x00);
+	ST7701_WRITE(st7701, 0xED, 0xFA, 0x89, 0xF0, 0x2B, 0x44, 0x55, 0x66, 0x77, 0x77, 0x66, 0x55, 0x44, 0xB2, 0x0F, 0x98, 0xAF);
+	ST7701_WRITE(st7701, 0xEF, 0x08, 0x08, 0x08, 0x45, 0x3F, 0x54);
+
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x13);
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x0E);
+
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0x11, 0x00);
+
+	msleep(120);
+
+	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x13);
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x0C);
+
+	msleep(10); 
+
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x00);
+
+	//bist   
+	//ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, 0x12);
+	//ST7701_WRITE(st7701, 0xD1, 0x81);
+	//ST7701_WRITE(st7701, 0xD2, 0x07);
+
+	ST7701_WRITE(st7701, 0x36, 0x00);
+	ST7701_WRITE(st7701, 0x35, 0x00);
+	ST7701_WRITE(st7701, 0x3A, 0x60);
+	msleep(30);
+}
+
+
 static int st7701_prepare(struct drm_panel *panel)
 {
 	struct st7701 *st7701 = panel_to_st7701(panel);
@@ -1135,6 +1190,128 @@ static const struct st7701_panel_desc rg28xx_desc = {
 	.gip_sequence = rg28xx_gip_sequence,
 };
 
+static const struct st7701_panel_desc wf40eswaa6mnn0_desc = {
+	.mode = &wf40eswaa6mnn0_mode,
+	.lanes = 2,
+	.format = MIPI_DSI_FMT_RGB888,
+	.panel_sleep_delay = 0,
+
+	.pv_gamma = {
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC0_MASK, 0x1),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC4_MASK, 0x08),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC8_MASK, 0x10),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC16_MASK, 0x0c),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC24_MASK, 0x10),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC52_MASK, 0x08),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC80_MASK, 0x10),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC108_MASK, 0x0c),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC147_MASK, 0x08),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC175_MASK, 0x22),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC203_MASK, 0x04),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC231_MASK, 0x14),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC239_MASK, 0x12),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC247_MASK, 0xb3),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC251_MASK, 0x3a),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC255_MASK, 0x1f)
+	},
+	.nv_gamma = {
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC4_MASK, 0x13),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC4_MASK, 0x19),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC8_MASK, 0x1f),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC16_MASK, 0x0f),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC24_MASK, 0x14),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC52_MASK, 0x07),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC80_MASK, 0x07),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC108_MASK, 0x08),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC147_MASK, 0x07),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC175_MASK, 0x22),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC203_MASK, 0x02),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC231_MASK, 0xf),
+
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC239_MASK, 0x0f),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC247_MASK, 0xa3),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC251_MASK, 0x29),
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_AJ_MASK, 0) |
+		CFIELD_PREP(ST7701_CMD2_BK0_GAMCTRL_VC255_MASK, 0x0d)
+	},
+	.nlinv = 3,
+	.vop_uv = 4737500,
+	.vcom_uv = 662500,
+	.vgh_mv = 15000,
+	.vgl_mv = -10170,
+	.avdd_mv = 6600,
+	.avcl_mv = -4600,
+	.gamma_op_bias = OP_BIAS_MIDDLE,
+	.input_op_bias = OP_BIAS_MIDDLE,
+	.output_op_bias = OP_BIAS_MIN,
+	.t2d_ns = 1600,
+	.t3d_ns = 10400,
+	.eot_en = true,
+	.gip_sequence = wf40eswaa6mnn0_gip_sequence,
+};
+
+static const struct drm_display_mode d450c2505v0_mode = {
+	.clock 			= (int)(60 * (320 + 8 + 20 + 10) * (960 + 13 + 20 + 18) / 1000.0+0.5),
+
+	.hdisplay 		= 320,
+	.hsync_start		= 320 + 8,
+	.hsync_end 		= 320 + 8 + 20,
+	.htotal 		= 320 + 8 + 20 + 10,
+
+	.vdisplay 		= 960,
+	.vsync_start		= 960 + 13,
+	.vsync_end		= 960 + 13 + 20,
+	.vtotal			= 960 + 13 + 20 + 18,
+
+	.width_mm		= 37,
+	.height_mm		= 110,
+
+	.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+};
+
+const struct st7701_panel_desc d450c2505v0_desc = {
+	.mode = &d450c2505v0_mode,
+	.panel_sleep_delay = 80,
+
+	.pv_gamma = { 0x00, 0x0E, 0x17, 0x0E, 0x12, 0x08, 0x07, 0x09, 0x08, 0x20, 0x04, 0x11, 0x10, 0x27, 0x2F, 0x1F }, // +
+	.nv_gamma = { 0x0F, 0x17, 0x1D, 0x0D, 0x12, 0x06, 0x08, 0x08, 0x07, 0x20, 0x03, 0x11, 0x0F, 0x27, 0x2F, 0x1F }, // +
+	.nlinv = 1,         // +
+	.vop_uv = 5000000,  // +
+	.vcom_uv = 1212500, // +
+	.vgh_mv = 15000,    // +
+	.vgl_mv = -10170,   // +
+	.avdd_mv = 6600,    // +
+	.avcl_mv = -4600,   // +
+	.gamma_op_bias = OP_BIAS_MIDDLE, // +
+	.input_op_bias = OP_BIAS_MIN,    // +
+	.output_op_bias = OP_BIAS_MAX,   // +
+	.t2d_ns = 1000,     // +
+	.t3d_ns = 8000,     // +
+	.eot_en = true,     // +
+	.gip_sequence = d450c2505v0_gip_sequence,
+};
+
 static void st7701_cleanup(void *data)
 {
 	struct st7701 *st7701 = (struct st7701 *)data;
@@ -1270,12 +1447,14 @@ MODULE_DEVICE_TABLE(of, st7701_dsi_of_match);
 
 static const struct of_device_id st7701_spi_of_match[] = {
 	{ .compatible = "anbernic,rg28xx-panel", .data = &rg28xx_desc },
+	{ .compatible = "dx,d450c2505v0", .data = &d450c2505v0_desc },	
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, st7701_spi_of_match);
 
 static const struct spi_device_id st7701_spi_ids[] = {
 	{ "rg28xx-panel" },
+	{ "d450c2505v0" },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(spi, st7701_spi_ids);
