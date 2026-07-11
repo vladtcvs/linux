@@ -569,7 +569,7 @@ EXPORT_SYMBOL(drmm_of_get_bridge);
  * Initialize the panel structure for subsequent registration with
  * drm_panel_add().
  */
-static void drm_panel_init(struct drm_panel *panel, struct device *dev,
+void drm_panel_init(struct drm_panel *panel, struct device *dev,
 			   const struct drm_panel_funcs *funcs,
 			   int connector_type)
 {
