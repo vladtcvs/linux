@@ -1606,6 +1606,12 @@
 #define		VPU_HDMI_OUTPUT_CBCRY           (3 << 5)
 #define		VPU_HDMI_OUTPUT_CBYCR           (4 << 5)
 #define		VPU_HDMI_OUTPUT_CRCBY           (5 << 5)
+#define		VPU_HDMI_OUTPUT_BRG           	(0 << 5)
+#define		VPU_HDMI_OUTPUT_RGB           	(1 << 5)
+#define		VPU_HDMI_OUTPUT_RBG           	(2 << 5)
+#define		VPU_HDMI_OUTPUT_GBR           	(3 << 5)
+#define		VPU_HDMI_OUTPUT_GRB           	(4 << 5)
+#define		VPU_HDMI_OUTPUT_BGR           	(5 << 5)
 #define		VPU_HDMI_WR_RATE(rate)          (((rate & 0x1f) - 1) << 8)
 #define		VPU_HDMI_RD_RATE(rate)          (((rate & 0x1f) - 1) << 12)
 #define ENCI_INFO_READ 0x271c
