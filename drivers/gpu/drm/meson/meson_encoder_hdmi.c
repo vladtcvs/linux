@@ -192,7 +192,7 @@ static void meson_encoder_hdmi_atomic_enable(struct drm_bridge *bridge,
 					     struct drm_atomic_commit *state)
 {
 	struct meson_encoder_hdmi *encoder_hdmi = bridge_to_meson_encoder_hdmi(bridge);
-	unsigned int ycrcb_map = VPU_HDMI_OUTPUT_CBYCR;
+	unsigned int output_format_map = VPU_HDMI_OUTPUT_CBYCR;
 	struct meson_drm *priv = encoder_hdmi->priv;
 	struct drm_connector_state *conn_state;
 	const struct drm_display_mode *mode;
@@ -219,29 +219,48 @@ static void meson_encoder_hdmi_atomic_enable(struct drm_bridge *bridge,
 
 	dev_dbg(priv->dev, "\"%s\" vic %d\n", mode->name, vic);
 
-	if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24) {
-		ycrcb_map = VPU_HDMI_OUTPUT_CRYCB;
+	switch (encoder_hdmi->output_bus_fmt) {
+	case MEDIA_BUS_FMT_UYYVYY8_0_5X24:
+		output_format_map = VPU_HDMI_OUTPUT_CRYCB;
 		yuv420_mode = true;
-	} else if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYVY8_1X16)
-		ycrcb_map = VPU_HDMI_OUTPUT_CRYCB;
+		break;
+	case MEDIA_BUS_FMT_UYVY8_1X16:
+		output_format_map = VPU_HDMI_OUTPUT_CRYCB;
+		break;
+	case MEDIA_BUS_FMT_YUV8_1X24:
+		output_format_map = VPU_HDMI_OUTPUT_CBYCR;
+		break;
+	case MEDIA_BUS_FMT_RGB888_1X24:
+		output_format_map = VPU_HDMI_OUTPUT_RGB;
+		break;
+	}
 
 	/* VENC + VENC-DVI Mode setup */
-	meson_venc_hdmi_mode_set(priv, vic, ycrcb_map, yuv420_mode, mode);
+	meson_venc_hdmi_mode_set(priv, vic, output_format_map, yuv420_mode, mode);
 
 	/* VCLK Set clock */
 	meson_encoder_hdmi_set_vclk(encoder_hdmi, mode);
 
-	if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
+	switch (encoder_hdmi->output_bus_fmt) {
+	case MEDIA_BUS_FMT_UYYVYY8_0_5X24:
 		/* Setup YUV420 to HDMI-TX, no 10bit diphering */
 		writel_relaxed(2 | (2 << 2),
 			       priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
-	else if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYVY8_1X16)
+		break;
+	case MEDIA_BUS_FMT_UYVY8_1X16:
 		/* Setup YUV422 to HDMI-TX, no 10bit diphering */
 		writel_relaxed(1 | (2 << 2),
 				priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
-	else
+		break;
+	case MEDIA_BUS_FMT_YUV8_1X24:
 		/* Setup YUV444 to HDMI-TX, no 10bit diphering */
 		writel_relaxed(0, priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
+		break;
+	case MEDIA_BUS_FMT_RGB888_1X24:
+		writel_relaxed(0, priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
+		break;
+
+	}	
 
 	dev_dbg(priv->dev, "%s\n", priv->venc.hdmi_use_enci ? "VENCI" : "VENCP");
 
@@ -268,6 +287,7 @@ static const u32 meson_encoder_hdmi_out_bus_fmts[] = {
 	MEDIA_BUS_FMT_YUV8_1X24,
 	MEDIA_BUS_FMT_UYVY8_1X16,
 	MEDIA_BUS_FMT_UYYVYY8_0_5X24,
+	MEDIA_BUS_FMT_RGB888_1X24,
 };
 
 static u32 *
