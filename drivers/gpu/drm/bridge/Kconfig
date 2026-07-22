@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
+
 config DRM_BRIDGE
 	def_bool y
 	depends on DRM
@@ -457,6 +458,13 @@ config DRM_TI_TFP410
 	select DRM_KMS_HELPER
 	help
 	  Texas Instruments TFP410 DVI/HDMI Transmitter driver
+
+config DRM_TI_TFP401A
+	tristate "TI TFP401A HDMI->RGB bridge"
+	depends on OF
+	select DRM_KMS_HELPER
+	help
+	  Texas Instruments TFP401 HDMI->RGB bridge driver
 
 config DRM_TI_SN65DSI83
 	tristate "TI SN65DSI83 and SN65DSI84 DSI to LVDS bridge"
